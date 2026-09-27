@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Легкость & Юмор — Твой Личный Нутрициолог</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js for Weight Dynamics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        /* Custom scrollbar for chat */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(244, 219, 216, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #fda4af;
+            border-radius: 4px;
+        }
+        /* Animation keyframes */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+    </style>
+    <!-- React & Babel CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#FCF8F5] text-slate-800 min-h-screen flex justify-center">
+
+    <!-- Main Container App (mobile-first, centered with max-width on desktop) -->
+    <div id="root" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-white min-h-screen shadow-xl flex flex-col relative overflow-hidden">
+        <!-- React App mounts here -->
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Custom Hook to persist state in localStorage
+        function useLocalStorage(key, initialValue) {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (error) {
+                    console.log(error);
+                    return initialValue;
+                }
+            });
+
+            const setValue = (value) => {
+                try {
+                    const valueToStore = value instanceof Function ? value(storedValue) : value;
+                    setStoredValue(valueToStore);
+                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                } catch (error) {
+                    console.log(error);
+                }
+            };
+            return [storedValue, setValue];
+        }
+
+        // --- DATABASE OF MOTIVATIONAL/HUMOROUS PHRASES ---
+        const MOTIVATIONS = [
+            "Дорогая, весы показывают лишь твою земную гравитацию, а не твою космическую красоту! ✨",
+            "Один стакан чистой воды отдаляет тебя от холодильника на полтора часа. Проверено Любочкой!",
+            "Помни: складки должны быть только на королевском платье, но никак не на нашей уверенности! 👑",
+            "Сегодня отличный день, чтобы съесть яблоко так, будто это запретный плод в райском саду.",
+            "Мы худеем не для того, чтобы влезть в старые джинсы, а чтобы бывшие при встрече кусали локти!",
+            "Если очень хочется сладкого — посмотри на цены на коммунальные услуги. Сразу станет горько и аппетит пропадет. 😂"
+        ];
+
+        const RECIPES_DB = {
+            "курица, кабачок": {
+                title: "Кабачковые Лодочки 'Прощай, Бока!'",
+                time: "25 минут",
+                calories: "240 ккал (Б: 28, Ж: 8, У: 12)",
+                ingredients: ["Грудка куриная (филе) — 200г", "Кабачок средний — 1 шт.", "Чеснок — 1 зубчик", "Сыр легкий 15% — 30г", "Зелень, соль, перец — по вкусу"],
+                steps: [
+                    "Разрежь кабачок вдоль, ложкой выскреби мякоть, чтобы получились лодочки.",
+                    "Мелко нарежь куриную грудку и мякоть кабачка, смешай с измельченным чесноком и специями.",
+                    "Выложи начинку в лодочки, посыпь натертым легким сыром.",
+                    "Запекай в духовке при 180°C около 20 минут. Кушай и молодей!"
+                ],
+                joke: "Любочка гарантирует: после этого блюда талия уменьшается прямо пропорционально зависти подруг!"
+            },
+            "творог": {
+                title: "Воздушное Творожное Облако 'Сладость без Греха'",
+                time: "15 минут",
+                calories: "180 ккал (Б: 22, Ж: 4, У: 8)",
+                ingredients: ["Творог 2-5% — 200г", "Белок одного яйца", "Яблоки тертые или ягоды — 50г", "Подсластитель (стевия) — по вкусу", "Корица — щепотка"],
+                steps: [
+                    "Взбей яичный белок до крепких пиков (чтобы стоял, как твоя решимость похудеть!).",
+                    "Смешай творог с подсластителем и тертым яблоком.",
+                    "Аккуратно лопаткой вмешай взбитый белок в творожную массу.",
+                    "Выложи в пиалу и отправь в микроволновку на 3-4 минуты. Сверху посыпь корицей."
+                ],
+                joke: "Идеально к вечернему чаю, когда внутренний демон шепчет: 'Съешь конфетку, ты так устала...'"
+            },
+            "рыба, овощи": {
+                title: "Запеченный Судачок 'Царский Каприз'",
+                time: "30 минут",
+                calories: "210 ккал (Б: 26, Ж: 6, У: 10)",
+                ingredients: ["Филе белой рыбы (судак/треска) — 200г", "Брокколи или цветная капуста — 150г", "Помидор — 1 шт.", "Лимонный сок — 1 ст. ложка", "Йогурт натуральный — 2 ст. ложки"],
+                steps: [
+                    "Сбрызни рыбное филе лимонным соком, посоли и поперчи.",
+                    "Рядом выложи соцветия брокколи и кружочки помидора.",
+                    "Сверху смажь рыбу и овощи натуральным йогуртом (это у нас вместо жирного майонеза, дорогая!).",
+                    "Запекай в фольге 20 минут. Рыбка тает во рту, килограммы тают на боках!"
+                ],
+                joke: "Муж будет просить кусочек, но ты держи оборону — это сугубо для твоей девичьей фигуры!"
+            }
+        };
+
+        const LYUBOCHKA_QUIPS = [
+            "Дорогая, я тут подумала... Ты сегодня просто великолепно держишься! Пойдем выпьем водички?",
+            "Помни: конфетка в рот летит 3 секунды, на боках лежит 3 года, а в спортзале вытряхивается 3 часа!",
+            "Если хочется кушать — выпей стакан воды. Если через 15 минут всё ещё хочется — съешь огурец. Если и это не помогло — значит, ты просто скучаешь, а ну-ка марш на прогулку!",
+            "Как дела с водичкой? Твои почки уже шлют мне благодарственные телеграммы!",
+            "Красота моя, не смей себя ругать за вчерашнюю печеньку. Ну съела и съела, зато душа порадовалась. А сегодня возвращаемся на королевский путь!"
+        ];
+
+        function App() {
+            // Screen Navigation: 'home' | 'chat' | 'analysis' | 'recipes' | 'profile'
+            const [activeTab, setActiveTab] = useState('home');
+
+            // --- USER PROFILE STATE ---
+            const [profile, setProfile] = useLocalStorage('weight_profile', {
+                name: "Людмила",
+                age: 54,
+                startWeight: 85,
+                currentWeight: 81.2,
+                targetWeight: 72,
+                waterGoal: 8, // 8 cups (approx 2L)
+                characterLevel: 7 // Level of humor/strictness
+            });
+
+            // --- WATER TRACKER STATE ---
+            const [waterCount, setWaterCount] = useLocalStorage('water_today', 3);
+            const [waterAnimation, setWaterAnimation] = useState(false);
+
+            // --- WEIGHT HISTORY FOR CHART ---
+            const [weightLog, setWeightLog] = useLocalStorage('weight_log', [
+                { date: "01.09", weight: 85.0 },
+                { date: "07.09", weight: 84.1 },
+                { date: "14.09", weight: 83.0 },
+                { date: "21.09", weight: 81.8 },
+                { date: "27.09", weight: 81.2 }
+            ]);
+            const [newWeight, setNewWeight] = useState('');
+
+            // --- AI NUTRITIONIST CHAT STATE ---
+            const [chatMessages, setChatMessages] = useLocalStorage('chat_history', [
+                { id: 1, sender: 'bot', text: 'Здравствуй, моя хорошая! Я твоя Любочка — нейро-нутрициолог, мотиватор и главная по тарелочкам. Как твоё самочувствие сегодня? Плюшки стороной обходишь?', time: '10:00' }
+            ]);
+            const [inputMessage, setInputMessage] = useState('');
+            const [isTyping, setIsTyping] = useState(false);
+            const chatEndRef = useRef(null);
+
+            // --- MEDICAL ANALYSIS STATE ---
+            const [analysisText, setAnalysisText] = useState('');
+            const [analysisResult, setAnalysisResult] = useState(null);
+            const [analysisLoading, setAnalysisLoading] = useState(false);
+            const [analysisFile, setAnalysisFile] = useState(null);
+
+            // --- RECIPE GENERATOR STATE ---
+            const [recipeInput, setRecipeInput] = useState('');
+            const [recipeResult, setRecipeResult] = useState(null);
+            const [recipeLoading, setRecipeLoading] = useState(false);
+            const [recipePhoto, setRecipePhoto] = useState(null);
+
+            // --- RANDOM MOTIVATION ---
+            const [dailyMotivation, setDailyMotivation] = useState('');
+
+            useEffect(() => {
+                const randomQuote = MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)];
+                setDailyMotivation(randomQuote);
+            }, [activeTab]);
+
+            // Scroll to bottom of chat
+            useEffect(() => {
+                if (chatEndRef.current) {
+                    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [chatMessages, isTyping]);
+
+            // Chart render and update
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                if (activeTab === 'home' || activeTab === 'profile') {
+                    // Slight timeout to ensure DOM is rendered
+                    const timer = setTimeout(() => {
+                        const ctx = document.getElementById('weightChart');
+                        if (ctx) {
+                            if (chartInstance.current) {
+                                chartInstance.current.destroy();
+                            }
+                            chartInstance.current = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: weightLog.map(item => item.date),
+                                    datasets: [{
+                                        label: 'Твой вес (кг)',
+                                        data: weightLog.map(item => item.weight),
+                                        borderColor: '#fda4af', // rose-300
+                                        backgroundColor: 'rgba(253, 164, 175, 0.2)',
+                                        borderWidth: 3,
+                                        tension: 0.3,
+                                        pointBackgroundColor: '#f43f5e', // rose-500
+                                        pointRadius: 5,
+                                        fill: true
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false }
+                                    },
+                                    scales: {
+                                        y: {
+                                            grid: { color: '#f3f4f6' },
+                                            ticks: { font: { family: 'Nunito', size: 12 } }
+                                        },
+                                        x: {
+                                            grid: { display: false },
+                                            ticks: { font: { family: 'Nunito', size: 12 } }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }, 100);
+                    return () => clearTimeout(timer);
+                }
+            }, [activeTab, weightLog]);
+
+            // --- HANDLERS ---
+            const addWater = () => {
+                if (waterCount < profile.waterGoal) {
+                    setWaterAnimation(true);
+                    setWaterCount(prev => prev + 1);
+                    setTimeout(() => setWaterAnimation(false), 500);
+
+                    // Random Lyubochka encouragement on water add
+                    if (Math.random() > 0.4) {
+                        const quips = [
+                            "Умничка! Почки аплодируют стоя! 👏",
+                            "Буль-буль! Твоя кожа сияет всё ярче!",
+                            "Вот это я понимаю — королевский глоток красоты!",
+                            "Ещё стаканчик — и отёки уйдут со слезами облегчения!",
+                            "Прекрасно! Вымываем лишнее из организма и из мыслей!"
+                        ];
+                        const randomQuip = quips[Math.floor(Math.random() * quips.length)];
+                        triggerLyuNotification(randomQuip);
+                    }
+                }
+            };
+
+            const resetWater = () => {
+                setWaterCount(0);
+            };
+
+            const triggerLyuNotification = (messageText) => {
+                // Instantly injects a notification or updates chat
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                setChatMessages(prev => [
+                    ...prev,
+                    { id: Date.now(), sender: 'bot', text: `🔔 Напоминалка: ${messageText}`, time: timeStr }
+                ]);
+            };
+
+            const handleAddWeight = (e) => {
+                e.preventDefault();
+                if (!newWeight || isNaN(newWeight)) return;
+                const weightNum = parseFloat(parseFloat(newWeight).toFixed(1));
+                const now = new Date();
+                const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}`;
+                
+                const newLog = [...weightLog, { date: dateStr, weight: weightNum }];
+                setWeightLog(newLog);
+                setProfile({ ...profile, currentWeight: weightNum });
+                setNewWeight('');
+
+                // Calculate loss
+                const loss = (profile.startWeight - weightNum).toFixed(1);
+                
+                // Bot reacts in chat to weight update
+                setTimeout(() => {
+                    let reaction = "";
+                    if (weightNum < profile.currentWeight) {
+                        reaction = `🎉 Дорогая моя, ты взвесилась! ${weightNum} кг! Да у нас отвес! Минус ${Math.abs(profile.currentWeight - weightNum).toFixed(1)} кг за раз. Богиня! Танцуем ламбаду! 💃`;
+                    } else if (weightNum > profile.currentWeight) {
+                        reaction = `⚖️ Так, ${weightNum} кг. Ну-ка без паники! Это просто водичка задержалась из-за вчерашнего соленого огурчика или фазы Луны. Спокойно продолжаем пить воду и верить в себя!`;
+                    } else {
+                        reaction = `⚖️ Стабильность — признак мастерства! ${weightNum} кг. Организм закрепляет результат перед новым рывком вниз. Всё идет по плану, моя хорошая!`;
+                    }
+                    triggerLyuNotification(reaction);
+                }, 1000);
+            };
+
+            // --- AI BOT LOGIC ---
+            const handleSendMessage = (e, customText = null) => {
+                if (e) e.preventDefault();
+                const messageToSend = customText || inputMessage;
+                if (!messageToSend.trim()) return;
+
+                const userTime = new Date();
+                const userTimeStr = `${String(userTime.getHours()).padStart(2, '0')}:${String(userTime.getMinutes()).padStart(2, '0')}`;
+                
+                const userMsg = { id: Date.now() + 1, sender: 'user', text: messageToSend, time: userTimeStr };
+                setChatMessages(prev => [...prev, userMsg]);
+                setInputMessage('');
+                setIsTyping(true);
+
+                // Simulate Lyubochka thinking and replying
+                setTimeout(() => {
+                    let replyText = "";
+                    const textLower = messageToSend.toLowerCase();
+
+                    if (textLower.includes('сладк') || textLower.includes('конфет') || textLower.includes('шоколад')) {
+                        replyText = "Ох уж эти сладости! Смотри, дорогая, когда рука тянется за конфетой — это твоя нервная система просит обнимашек. Давай договоримся: вместо конфеты медленно выпей стакан тёплой воды, сделай глубокий вдох, позвони подруге или посмотри на красивое платье в интернете. Если совсем невмоготу — съешь половинку зефирки или дольку горького шоколада (от 75% какао). Но только смакуя её 5 минут, как королева! 🍫";
+                    } else if (textLower.includes('сомал') || textLower.includes('сосис') || textLower.includes('пирож') || textLower.includes('нарушил') || textLower.includes('съел')) {
+                        replyText = "Так, стоп! Посыпать голову пеплом и ругать себя — это худшая диета. Ну съела ты этот пирожок, он уже переваривается и питает твои шикарные клеточки. Главное — не устраивать из этого 'все пропало, гори сарай, гори и хата' и не доедать весь холодильник. Сделали вывод, улыбнулись, выпили водички и на ужин у нас легкий белок с овощами. Я тебя обнимаю, ты лучшая! 🤗";
+                    } else if (textLower.includes('рецепт') || textLower.includes('поесть') || textLower.includes('кушать на ночь')) {
+                        replyText = "Если хочется кушать на ночь так, что даже потолок кажется аппетитным, наш идеальный выбор — лёгкий белок. Отвари одно яйцо (можно съесть только белок), возьми 100г нежирного творога или выпей стакан кефира маленькой ложечкой (так мозг думает, что ест полноценное блюдо!). И спать ложись до 23:00, чтобы гормон сытости лептин успел поработать!";
+                    } else if (textLower.includes('привет') || textLower.includes('здравствуй')) {
+                        replyText = "Привет, моя золотая! Рада слышать тебя. Настрой на сегодня — боевой, талия — стремящаяся к идеалу, настроение — порхать как бабочка! Как продвигаются наши успехи?";
+                    } else if (textLower.includes('вес') || textLower.includes('худею')) {
+                        replyText = "Процесс похудения в нашем золотом возрасте — это не спринт, это красивая неспешная прогулка. Мы бережём суставы, балуем кожу и никуда не спешим. Каждый ушедший грамм — это победа! Хвали себя за каждый шаг!";
+                    } else {
+                        // Random general supporting response
+                        const fallbackReplies = [
+                            "Твой вопрос записала в свой блокнотик! Помни главное: ты умница, красавица и заслуживаешь самого лучшего отношения к своему телу. Давай сегодня добавим 15 минут ходьбы в приятном темпе?",
+                            "Ай да умница, какие правильные вопросы задаешь! С таким подходом мы точно избавимся от этой лишней 'брони' на бедрах. Твоё тело скажет тебе огромное спасибо за заботу!",
+                            "Любочка всегда рядом! Главное — не голодать. Голод — наш враг, он заставляет нас совершать ночные набеги на холодильник. Кушай дробно, вкусно и с любовью к себе!"
+                        ];
+                        replyText = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
+                    }
+
+                    const botTime = new Date();
+                    const botTimeStr = `${String(botTime.getHours()).padStart(2, '0')}:${String(botTime.getMinutes()).padStart(2, '0')}`;
+                    
+                    setChatMessages(prev => [...prev, { id: Date.now() + 2, sender: 'bot', text: replyText, time: botTimeStr }]);
+                    setIsTyping(false);
+                }, 1500);
+            };
+
+            // --- ANALYSES PARSING SIMULATION ---
+            const handleAnalyze = (e) => {
+                e.preventDefault();
+                if (!analysisText.trim() && !analysisFile) return;
+
+                setAnalysisLoading(true);
+                setAnalysisResult(null);
+
+                setTimeout(() => {
+                    const text = analysisText.toLowerCase();
+                    let response = {
+                        detected: "Общий анализ крови + Липидный профиль (Холестерин)",
+                        status: "warning", // 'success' | 'warning' | 'danger'
+                        vitamins: [
+                            { name: "Витамин D3", dose: "2000 ME ежедневно", desc: "Поддержка костей и сияния кожи после 50 лет" },
+                            { name: "Омега-3", dose: "1000 мг ежедневно", desc: "Защита сосудов и укрощение холестерина" },
+                            { name: "Магний B6", dose: "300 мг на ночь", desc: "Чтобы спать как младенец и не реагировать на глупости окружающих" }
+                        ],
+                        foodsToLove: ["Жирная дикая рыба (скумбрия, сельдь)", "Семена льна и тыквенные семечки", "Оливковое масло первого отжима", "Шпинат и брокколи для бодрости"],
+                        foodsToLimit: ["Маргарин и скрытые трансжиры", "Сдобная выпечка (бабушкины пирожки — только по праздникам!)", "Сладкая газировка"],
+                        comment: "Любочка подмигивает: Анализы неплохие, но холестерин шепчет, что пора любить авокадо сильнее, чем колбасу. Обязательно покажи результаты терапевту!"
+                    };
+
+                    if (text.includes('сахар') || text.includes('глюкоз') || text.includes('диабет')) {
+                        response = {
+                            detected: "Анализ на Глюкозу / Инсулинорезистентность",
+                            status: "danger",
+                            vitamins: [
+                                { name: "Хром (Пиколинат)", dose: "200 мкг с утра", desc: "Усмиряет дикое желание обокрасть кондитерский отдел" },
+                                { name: "Витамин D3", dose: "2000 ME", desc: "Улучшает чувствительность клеток к инсулину" },
+                                { name: "Альфа-липоевая кислота", dose: "150 мг", desc: "Мощный антиоксидант для контроля сахаров" }
+                            ],
+                            foodsToLove: ["Зеленые листовые овощи, огурцы", "Кабачки, баклажаны", "Чечевица и нут (сложные углеводы)", "Белое мясо птицы"],
+                            foodsToLimit: ["Белый сахар и все сиропы", "Белый рис и макароны из мягких сортов пшеницы", "Фруктовые соки (лучше съешь целое яблоко!)"],
+                            comment: "Любочка строго грозит пальчиком: Глюкоза требует дисциплины! Заменяем быстрые углеводы на долгие, гуляем после ужина 20 минут, и сахар плавно поползет вниз!"
+                        };
+                    } else if (text.includes('щитовидк') || text.includes('ттг') || text.includes('тирокс')) {
+                        response = {
+                            detected: "Гормоны щитовидной железы (ТТГ, Т3, Т4)",
+                            status: "warning",
+                            vitamins: [
+                                { name: "Селен", dose: "100 мкг", desc: "Главный друг и помощник твоей щитовидной железы" },
+                                { name: "Йод (после консультации!)", dose: "150 мкг", desc: "Только если врач разрешил при дефиците" },
+                                { name: "Витамин C", dose: "500 мг", desc: "Для бодрости духа и поддержки надпочечников" }
+                            ],
+                            foodsToLove: ["Морская капуста (ламинария)", "Морепродукты, креветки", "Бразильские орехи (достаточно 2 шт в день!)", "Яйца куриные"],
+                            foodsToLimit: ["Соевые продукты в больших объемах", "Чрезмерное количество крестоцветных (брокколи, цветная капуста) в сыром виде — только тушить!"],
+                            comment: "Любочка обнимает: Наша щитовидка — это дирижер обмена веществ. Если она ленится, вес уходит неохотно. Давай поддержим её мягким уходом!"
+                        };
+                    }
+
+                    setAnalysisResult(response);
+                    setAnalysisLoading(false);
+                }, 2000);
+            };
+
+            const simulateFileUpload = (type) => {
+                setAnalysisLoading(true);
+                setAnalysisResult(null);
+                setAnalysisFile({ name: `анализ_${type}.pdf` });
+                setTimeout(() => {
+                    setAnalysisText(`В загруженном файле обнаружены маркеры: ${type === 'blood' ? 'холестерин повышен, гемоглобин 115' : 'ТТГ 4.2 (субклинический гипотиреоз)'}`);
+                    // Trigger analyze using simulated text
+                    const fakeE = { preventDefault: () => {} };
+                    handleAnalyze(fakeE);
+                }, 1200);
+            };
+
+            // --- RECIPE GENERATION SIMULATION ---
+            const handleGenerateRecipe = (e) => {
+                e.preventDefault();
+                if (!recipeInput.trim() && !recipePhoto) return;
+
+                setRecipeLoading(true);
+                setRecipeResult(null);
+
+                setTimeout(() => {
+                    const text = recipeInput.toLowerCase();
+                    let matchedRecipe = RECIPES_DB["курица, кабачок"]; // default
+
+                    if (text.includes('творог') || text.includes('сырник')) {
+                        matchedRecipe = RECIPES_DB["творог"];
+                    } else if (text.includes('рыб') || text.includes('судак') || text.includes('треск') || text.includes('овощ')) {
+                        matchedRecipe = RECIPES_DB["рыба, овощи"];
+                    }
+
+                    setRecipeResult(matchedRecipe);
+                    setRecipeLoading(false);
+                }, 1800);
+            };
+
+            const handlePhotoUpload = (foodType) => {
+                setRecipePhoto(foodType === 'fridge' ? 'Овощи и филе в холодильнике' : 'Творог 5%');
+                setRecipeLoading(true);
+                setTimeout(() => {
+                    setRecipeInput(foodType === 'fridge' ? 'курица, кабачок, сыр' : 'творог, яблоки');
+                    setRecipeLoading(false);
+                }, 1000);
+            };
+
+            // --- PROGRESS STATS ---
+            const totalWeightLoss = (profile.startWeight - profile.currentWeight).toFixed(1);
+            const remainingToTarget = (profile.currentWeight - profile.targetWeight).toFixed(1);
+
+            return (
+                <div class="flex flex-col h-full w-full justify-between">
+                    
+                    {/* APP HEADER */}
+                    <header class="bg-gradient-to-r from-rose-400 to-amber-300 text-white p-4 rounded-b-2xl shadow-md sticky top-0 z-10 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-inner">
+                                <span class="text-2xl floating">🍎</span>
+                            </div>
+                            <div>
+                                <h1 class="font-bold text-lg leading-tight">Легкость & Юмор</h1>
+                                <p class="text-xs text-rose-50 opacity-90">Твой проводник Любочка</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full text-xs font-semibold">
+                            <span>🏃‍♀️ {profile.currentWeight} кг</span>
+                            <span class="opacity-75">/</span>
+                            <span>🎯 {profile.targetWeight} кг</span>
+                        </div>
+                    </header>
+
+                    {/* MAIN CONTENT SPACE WITH SCROLLING */}
+                    <main class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-24 custom-scrollbar">
+                        
+                        {/* 1. HOME SCREEN */}
+                        {activeTab === 'home' && (
+                            <div class="space-y-4">
+                                {/* LYUBOCHKA WELCOME CARD */}
+                                <div class="bg-gradient-to-br from-rose-50 to-amber-50 border border-rose-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+                                    <div class="absolute -right-6 -bottom-6 text-7xl opacity-10">👵</div>
+                                    <h2 class="font-bold text-rose-700 text-lg flex items-center gap-2">
+                                        Привет, {profile.name}! 👋
+                                    </h2>
+                                    <p class="text-sm mt-1 text-slate-700 italic">
+                                        "{dailyMotivation}"
+                                    </p>
+                                    <div class="mt-3 flex gap-2">
+                                        <button 
+                                            onClick={() => setActiveTab('chat')} 
+                                            class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition"
+                                        >
+                                            Спросить Любочку 💬
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                const quotes = MOTIVATIONS;
+                                                setDailyMotivation(quotes[Math.floor(Math.random() * quotes.length)]);
+                                            }} 
+                                            class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+                                        >
+                                            Другая мудрость 🎲
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* WATER REMINDER TRACKER */}
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                <i data-lucide="droplet" class="text-blue-500 w-5 h-5"></i>
+                                                Водный баланс
+                                            </h3>
+                                            <p class="text-xs text-slate-500">Выпито: {waterCount} из {profile.waterGoal} стаканов</p>
+                                        </div>
+                                        <button 
+                                            onClick={resetWater} 
+                                            class="text-xs text-slate-400 hover:text-rose-500 underline transition"
+                                        >
+                                            Сбросить
+                                        </button>
+                                    </div>
+
+                                    {/* Glass Grid */}
+                                    <div class="grid grid-cols-8 gap-2 py-2">
+                                        {Array.from({ length: profile.waterGoal }).map((_, i) => (
+                                            <button 
+                                                key={i}
+                                                onClick={addWater}
+                                                disabled={i < waterCount}
+                                                class={`h-11 rounded-lg flex flex-col items-center justify-center transition-all duration-300 relative ${
+                                                    i < waterCount 
+                                                        ? 'bg-blue-100 text-blue-600 scale-95 border-b-4 border-blue-400' 
+                                                        : 'bg-slate-50 text-slate-300 hover:bg-blue-50 hover:text-blue-300 border border-slate-200'
+                                                } ${waterAnimation && i === waterCount ? 'scale-110' : ''}`}
+                                            >
+                                                <span class="text-lg">🥛</span>
+                                                <span class="text-[8px] font-bold mt-0.5">{i + 1}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Encouragement message */}
+                                    <div class="bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 flex items-start gap-2">
+                                        <span class="text-lg">💡</span>
+                                        <p class="text-xs text-blue-800 leading-snug">
+                                            {waterCount >= profile.waterGoal 
+                                                ? "Норма выполнена! Ты настоящая королева гидратации! Кожа скажет спасибо! 💖" 
+                                                : waterCount === 0 
+                                                    ? "Ни одного стаканчика? Дорогая, давай сделаем один глоток за здоровье!" 
+                                                    : "Каждый стакан воды ускоряет твой метаболизм и делает бока скромнее!"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* WEIGHT LOSS DYNAMICS OVERVIEW */}
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                <i data-lucide="trending-down" class="text-emerald-500 w-5 h-5"></i>
+                                                Динамика Твоей Легкости
+                                            </h3>
+                                            <p class="text-xs text-slate-500">Уже сброшено: <span class="font-bold text-emerald-600">-{totalWeightLoss} кг</span> из {profile.startWeight - profile.targetWeight} запланированных</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setActiveTab('profile')} 
+                                            class="text-xs text-rose-500 font-semibold flex items-center gap-0.5 hover:underline"
+                                        >
+                                            Лог веса <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+
+                                    {/* Mini Weight Chart Container */}
+                                    <div class="h-44 bg-slate-50 rounded-xl p-2 border border-slate-100">
+                                        <canvas id="weightChart"></canvas>
+                                    </div>
+
+                                    {/* Add Weight Inline Form */}
+                                    <form onSubmit={handleAddWeight} class="flex gap-2 items-center bg-rose-50/40 p-2.5 rounded-xl border border-rose-100/60">
+                                        <span class="text-xs font-semibold text-slate-600 shrink-0">Записать новый вес:</span>
+                                        <div class="relative flex-1">
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                placeholder="79.5"
+                                                value={newWeight}
+                                                onChange={(e) => setNewWeight(e.target.value)}
+                                                class="w-full text-sm py-1.5 pl-3 pr-8 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                                            />
+                                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">кг</span>
+                                        </div>
+                                        <button 
+                                            type="submit" 
+                                            class="bg-rose-500 hover:bg-rose-600 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition shadow-sm"
+                                        >
+                                            Записать
+                                        </button>
+                                    </form>
+                                </div>
+
+                                {/* QUICK MENU GRID */}
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button 
+                                        onClick={() => setActiveTab('analysis')}
+                                        class="bg-white hover:bg-rose-50/20 border border-slate-100 rounded-xl p-3 shadow-sm text-left transition hover:scale-[1.02]"
+                                    >
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center mb-2">
+                                            <i data-lucide="activity" class="w-5 h-5"></i>
+                                        </div>
+                                        <h4 class="font-bold text-xs text-slate-800">Разбор Анализов</h4>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">Витамины & еда по твоим показателям</p>
+                                    </button>
+
+                                    <button 
+                                        onClick={() => setActiveTab('recipes')}
+                                        class="bg-white hover:bg-rose-50/20 border border-slate-100 rounded-xl p-3 shadow-sm text-left transition hover:scale-[1.02]"
+                                    >
+                                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+                                            <i data-lucide="soup" class="w-5 h-5"></i>
+                                        </div>
+                                        <h4 class="font-bold text-xs text-slate-800">ПП Конструктор</h4>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">Рецепты по фото или списку продуктов</p>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 2. CHAT WITH NUTRITIONIST LYUBOCHKA */}
+                        {activeTab === 'chat' && (
+                            <div class="flex flex-col h-[520px] bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                                {/* Chat Header */}
+                                <div class="bg-gradient-to-r from-rose-100 to-rose-200 px-4 py-3 border-b border-rose-200 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-10 h-10 rounded-full bg-white border-2 border-rose-400 flex items-center justify-center text-xl relative">
+                                            👵
+                                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white"></span>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-xs text-rose-950">Любочка твоя золотая</h3>
+                                            <p class="text-[10px] text-emerald-700 font-medium">В сети • Дает полезные пинки</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs bg-white/50 px-2 py-0.5 rounded-full text-rose-900 font-bold">Харизма 🔥 {profile.characterLevel}/10</span>
+                                </div>
+
+                                {/* Messages Box */}
+                                <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/50">
+                                    {chatMessages.map((msg) => (
+                                        <div key={msg.id} class={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div class={`max-w-[85%] rounded-2xl px-3 py-2 text-xs shadow-sm leading-relaxed ${
+                                                msg.sender === 'user'
+                                                    ? 'bg-rose-500 text-white rounded-tr-none'
+                                                    : msg.text.startsWith('🔔') 
+                                                        ? 'bg-amber-50 text-amber-900 border border-amber-100 rounded-tl-none'
+                                                        : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
+                                            }`}>
+                                                <p>{msg.text}</p>
+                                                <span class={`text-[8px] block text-right mt-1 ${msg.sender === 'user' ? 'text-rose-100' : 'text-slate-400'}`}>
+                                                    {msg.time}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {isTyping && (
+                                        <div class="flex justify-start">
+                                            <div class="bg-white border border-slate-100 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs shadow-sm text-slate-400 flex items-center gap-1">
+                                                <span class="animate-bounce">●</span>
+                                                <span class="animate-bounce [animation-delay:0.2s]">●</span>
+                                                <span class="animate-bounce [animation-delay:0.4s]">●</span>
+                                                <span class="ml-1 text-[10px] italic">Любочка поправляет очки...</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div ref={chatEndRef} />
+                                </div>
+
+                                {/* Suggested Quick Prompts */}
+                                <div class="p-2 bg-slate-50 border-t border-slate-100 flex gap-2 overflow-x-auto custom-scrollbar">
+                                    <button 
+                                        onClick={() => handleSendMessage(null, "Очень хочется сладкого, спасай!")}
+                                        class="bg-white hover:bg-rose-50 border border-slate-200 rounded-full px-3 py-1 text-[10px] whitespace-nowrap text-slate-600 font-semibold shadow-sm shrink-0 transition"
+                                    >
+                                        🍫 Сладкий соблазн!
+                                    </button>
+                                    <button 
+                                        onClick={() => handleSendMessage(null, "Я съела пирожок на ночь... Ругай меня")}
+                                        class="bg-white hover:bg-rose-50 border border-slate-200 rounded-full px-3 py-1 text-[10px] whitespace-nowrap text-slate-600 font-semibold shadow-sm shrink-0 transition"
+                                    >
+                                        🥐 Сорвалась на пирожок
+                                    </button>
+                                    <button 
+                                        onClick={() => handleSendMessage(null, "Что лучше всего скушать перед сном?")}
+                                        class="bg-white hover:bg-rose-50 border border-slate-200 rounded-full px-3 py-1 text-[10px] whitespace-nowrap text-slate-600 font-semibold shadow-sm shrink-0 transition"
+                                    >
+                                        🌙 Ужин полуночника
+                                    </button>
+                                </div>
+
+                                {/* Message Input Form */}
+                                <form onSubmit={(e) => handleSendMessage(e)} class="p-3 bg-white border-t border-slate-100 flex gap-2 items-center">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Напиши Любочке..."
+                                        value={inputMessage}
+                                        onChange={(e) => setInputMessage(e.target.value)}
+                                        class="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-xs border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                                    />
+                                    <button 
+                                        type="submit"
+                                        class="bg-rose-500 hover:bg-rose-600 text-white w-9 h-9 rounded-xl flex items-center justify-center transition shadow-sm shrink-0"
+                                    >
+                                        <i data-lucide="send" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* 3. MEDICAL ANALYSES RECOMMENDATIONS */}
+                        {activeTab === 'analysis' && (
+                            <div class="space-y-4">
+                                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-4 shadow-sm">
+                                    <div class="flex gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center shrink-0">
+                                            <i data-lucide="microscope" class="w-6 h-6"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 text-sm">Твой Медицинский Навигатор</h3>
+                                            <p class="text-xs text-slate-600 mt-1">
+                                                Сюда можно скопировать текст твоих анализов или загрузить результаты. Любочка найдет дефициты и подскажет, какие продукты нужно кушать активнее, а какие — спрятать подальше!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Upload Form */}
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Введи показатели вручную (например: «холестерин 6.5, сахар 5.8»):</label>
+                                        <textarea 
+                                            rows="3"
+                                            placeholder="Холестерин, глюкоза, ТТГ, железо или просто скопируй сюда весь текст из медкарты..."
+                                            value={analysisText}
+                                            onChange={(e) => setAnalysisText(e.target.value)}
+                                            class="w-full text-xs p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        ></textarea>
+                                    </div>
+
+                                    {/* Simulated File Upload Row */}
+                                    <div class="space-y-2">
+                                        <span class="block text-xs font-bold text-slate-700">Или прикрепи файл результатов:</span>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button 
+                                                type="button"
+                                                onClick={() => simulateFileUpload('blood')}
+                                                class="border border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/20 rounded-xl p-2.5 text-center transition flex flex-col items-center justify-center gap-1.5"
+                                            >
+                                                <i data-lucide="file-text" class="w-5 h-5 text-indigo-500"></i>
+                                                <span class="text-[10px] font-semibold text-slate-700">Анализ Крови (демо)</span>
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => simulateFileUpload('thyroid')}
+                                                class="border border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/20 rounded-xl p-2.5 text-center transition flex flex-col items-center justify-center gap-1.5"
+                                            >
+                                                <i data-lucide="shield-alert" class="w-5 h-5 text-indigo-500"></i>
+                                                <span class="text-[10px] font-semibold text-slate-700">Щитовидка (демо)</span>
+                                            </button>
+                                        </div>
+                                        {analysisFile && (
+                                            <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg p-2 flex items-center justify-between text-xs text-indigo-900">
+                                                <span class="flex items-center gap-1.5 font-medium">
+                                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                                                    {analysisFile.name}
+                                                </span>
+                                                <button onClick={() => { setAnalysisFile(null); setAnalysisText(''); setAnalysisResult(null); }} class="text-rose-500 font-bold">Удалить</button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button 
+                                        onClick={handleAnalyze}
+                                        disabled={analysisLoading || (!analysisText.trim() && !analysisFile)}
+                                        class="w-full bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5"
+                                    >
+                                        {analysisLoading ? (
+                                            <>
+                                                <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                                Любочка надевает микроскоп...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                                Получить мудрый разбор
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Analysis Result Panel */}
+                                {analysisResult && (
+                                    <div class="bg-white border-2 border-indigo-100 rounded-2xl p-4 shadow-md space-y-4 animate-fade-in">
+                                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                                            <div>
+                                                <span class="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Распознано:</span>
+                                                <h4 class="font-bold text-slate-800 text-xs">{analysisResult.detected}</h4>
+                                            </div>
+                                            <span class={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                analysisResult.status === 'success' ? 'bg-emerald-100 text-emerald-800' :
+                                                analysisResult.status === 'warning' ? 'bg-amber-100 text-amber-800' :
+                                                'bg-rose-100 text-rose-800'
+                                            }`}>
+                                                Внимание: {analysisResult.status === 'warning' ? 'Требует заботы' : 'Важно'}
+                                            </span>
+                                        </div>
+
+                                        {/* Vitamins Section */}
+                                        <div class="space-y-2">
+                                            <h5 class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                                                💊 Рекомендуемые Нутрицевтики (обсуди с врачом):
+                                            </h5>
+                                            <div class="space-y-1.5">
+                                                {analysisResult.vitamins.map((vit, i) => (
+                                                    <div key={i} class="bg-indigo-50/30 p-2.5 rounded-lg border border-indigo-100/40">
+                                                        <div class="flex justify-between items-center text-xs font-bold text-indigo-950">
+                                                            <span>{vit.name}</span>
+                                                            <span class="text-rose-500">{vit.dose}</span>
+                                                        </div>
+                                                        <p class="text-[10px] text-slate-600 mt-0.5">{vit.desc}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Food Recommendations */}
+                                        <div class="grid grid-cols-2 gap-3 pt-2">
+                                            <div class="bg-emerald-50/40 border border-emerald-100 rounded-xl p-3">
+                                                <h6 class="font-bold text-emerald-900 text-xs flex items-center gap-1 mb-1.5">
+                                                    💚 В корзину:
+                                                </h6>
+                                                <ul class="text-[10px] text-slate-700 space-y-1 list-disc pl-3">
+                                                    {analysisResult.foodsToLove.map((f, i) => (
+                                                        <li key={i}>{f}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            <div class="bg-rose-50/40 border border-rose-100 rounded-xl p-3">
+                                                <h6 class="font-bold text-rose-900 text-xs flex items-center gap-1 mb-1.5">
+                                                    🛑 Ограничить:
+                                                </h6>
+                                                <ul class="text-[10px] text-slate-700 space-y-1 list-disc pl-3">
+                                                    {analysisResult.foodsToLimit.map((f, i) => (
+                                                        <li key={i}>{f}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        {/* Lyubochka Comment */}
+                                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+                                            <span class="text-xl shrink-0">👵</span>
+                                            <p class="text-xs text-amber-900 italic leading-snug">
+                                                {analysisResult.comment}
+                                            </p>
+                                        </div>
+
+                                        <p class="text-[8px] text-center text-slate-400">
+                                            *Данный разбор носит рекомендательный характер на основе ИИ. Все назначения согласуйте с лечащим врачом.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 4. RECIPES AND PP CONSTRUCTOR */}
+                        {activeTab === 'recipes' && (
+                            <div class="space-y-4">
+                                <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-4 shadow-sm">
+                                    <div class="flex gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                                            <i data-lucide="soup" class="w-6 h-6"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 text-sm">Кулинарная Магия Любочки</h3>
+                                            <p class="text-xs text-slate-600 mt-1">
+                                                Напиши продукты, которые грустят в холодильнике, или загрузи фото продуктов. Я придумаю простое, невероятно вкусное ПП-блюдо, от которого не растут бока!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Form Input */}
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Напиши ингредиенты (через запятую):</label>
+                                        <input 
+                                            type="text"
+                                            placeholder="например: курица, кабачок, чеснок..."
+                                            value={recipeInput}
+                                            onChange={(e) => setRecipeInput(e.target.value)}
+                                            class="w-full text-xs p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                        />
+                                    </div>
+
+                                    {/* Simulated Camera Upload */}
+                                    <div class="space-y-2">
+                                        <span class="block text-xs font-bold text-slate-700">Или прикрепи фото продуктов/холодильника:</span>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button 
+                                                type="button"
+                                                onClick={() => handlePhotoUpload('fridge')}
+                                                class="border border-dashed border-slate-300 hover:border-amber-400 bg-slate-50/50 hover:bg-amber-50/20 rounded-xl p-2.5 text-center transition flex flex-col items-center justify-center gap-1.5"
+                                            >
+                                                <i data-lucide="camera" class="w-5 h-5 text-amber-600"></i>
+                                                <span class="text-[10px] font-semibold text-slate-700">Скан холодильника (демо)</span>
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => handlePhotoUpload('cottage')}
+                                                class="border border-dashed border-slate-300 hover:border-amber-400 bg-slate-50/50 hover:bg-amber-50/20 rounded-xl p-2.5 text-center transition flex flex-col items-center justify-center gap-1.5"
+                                            >
+                                                <i data-lucide="image" class="w-5 h-5 text-amber-600"></i>
+                                                <span class="text-[10px] font-semibold text-slate-700">Фото пачки творога (демо)</span>
+                                            </button>
+                                        </div>
+                                        {recipePhoto && (
+                                            <div class="bg-amber-50/40 border border-amber-100 rounded-lg p-2 flex items-center justify-between text-xs text-amber-900">
+                                                <span class="flex items-center gap-1.5 font-medium">
+                                                    <i data-lucide="image" class="w-4 h-4 text-amber-500"></i>
+                                                    {recipePhoto}
+                                                </span>
+                                                <button onClick={() => { setRecipePhoto(null); setRecipeInput(''); setRecipeResult(null); }} class="text-rose-500 font-bold">Очистить</button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button 
+                                        onClick={handleGenerateRecipe}
+                                        disabled={recipeLoading || (!recipeInput.trim() && !recipePhoto)}
+                                        class="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5"
+                                    >
+                                        {recipeLoading ? (
+                                            <>
+                                                <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                                Любочка листает кулинарную книгу...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i data-lucide="cooking-pot" class="w-4 h-4"></i>
+                                                Придумать ПП Рецепт
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Recipe Result Panel */}
+                                {recipeResult && (
+                                    <div class="bg-white border-2 border-amber-100 rounded-2xl p-4 shadow-md space-y-4 animate-fade-in">
+                                        <div class="border-b border-slate-100 pb-3">
+                                            <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Идеальный рецепт для похудения:</span>
+                                            <h4 class="font-bold text-slate-800 text-sm mt-0.5">{recipeResult.title}</h4>
+                                            <div class="flex gap-4 mt-2 text-[10px] text-slate-500">
+                                                <span class="flex items-center gap-0.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i> {recipeResult.time}</span>
+                                                <span class="flex items-center gap-0.5"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> {recipeResult.calories}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Ingredients */}
+                                        <div class="space-y-1.5">
+                                            <h5 class="text-xs font-bold text-slate-700">🥦 Ингредиенты:</h5>
+                                            <ul class="text-xs text-slate-600 pl-3 list-disc space-y-1">
+                                                {recipeResult.ingredients.map((ing, i) => (
+                                                    <li key={i}>{ing}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        {/* Steps */}
+                                        <div class="space-y-2">
+                                            <h5 class="text-xs font-bold text-slate-700">👩‍🍳 Процесс приготовления:</h5>
+                                            <ol class="text-xs text-slate-600 pl-4 list-decimal space-y-1.5">
+                                                {recipeResult.steps.map((step, i) => (
+                                                    <li key={i} class="pl-1 leading-relaxed">{step}</li>
+                                                ))}
+                                            </ol>
+                                        </div>
+
+                                        {/* Recipe Joke / Comment */}
+                                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+                                            <span class="text-xl shrink-0">👴</span>
+                                            <p class="text-xs text-amber-900 italic leading-snug">
+                                                "{recipeResult.joke}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 5. PROFILE & WEIGHT SETTINGS */}
+                        {activeTab === 'profile' && (
+                            <div class="space-y-4">
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-4">
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                        <i data-lucide="user" class="text-rose-500 w-5 h-5"></i>
+                                        Личный кабинет Богини
+                                    </h3>
+                                    
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Как тебя называть?</label>
+                                            <input 
+                                                type="text" 
+                                                value={profile.name} 
+                                                onChange={(e) => setProfile({...profile, name: e.target.value})}
+                                                class="w-full text-xs p-2.5 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                                            />
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-500 mb-1">Возраст (лет)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={profile.age} 
+                                                    onChange={(e) => setProfile({...profile, age: parseInt(e.target.value)})}
+                                                    class="w-full text-xs p-2.5 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-500 mb-1">Норма воды (стаканов)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={profile.waterGoal} 
+                                                    onChange={(e) => setProfile({...profile, waterGoal: parseInt(e.target.value)})}
+                                                    class="w-full text-xs p-2.5 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-500 mb-1">Старт (кг)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={profile.startWeight} 
+                                                    onChange={(e) => setProfile({...profile, startWeight: parseFloat(e.target.value)})}
+                                                    class="w-full text-xs p-2.5 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-500 mb-1">Сейчас (кг)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={profile.currentWeight} 
+                                                    disabled
+                                                    class="w-full text-xs p-2.5 bg-slate-100 text-slate-500 rounded-xl border border-slate-200"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-slate-500 mb-1">Цель (кг)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={profile.targetWeight} 
+                                                    onChange={(e) => setProfile({...profile, targetWeight: parseFloat(e.target.value)})}
+                                                    class="w-full text-xs p-2.5 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <label class="block text-xs font-semibold text-slate-500">Уровень вредности характера Любочки</label>
+                                                <span class="text-xs font-bold text-rose-500">{profile.characterLevel} из 10</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                min="1" 
+                                                max="10" 
+                                                value={profile.characterLevel} 
+                                                onChange={(e) => setProfile({...profile, characterLevel: parseInt(e.target.value)})}
+                                                class="w-full accent-rose-500 cursor-pointer"
+                                            />
+                                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                                <span>Мягкая фея 🧚‍♀️</span>
+                                                <span>Железная леди ⚔️</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* DETAILED HISTORY OF WEIGHTS */}
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                            <i data-lucide="history" class="text-rose-400 w-5 h-5"></i>
+                                            История Твоих Побед
+                                        </h3>
+                                        <button 
+                                            onClick={() => {
+                                                if (confirm("Точно стереть историю побед?")) {
+                                                    setWeightLog([{ date: "27.09", weight: profile.currentWeight }]);
+                                                }
+                                            }}
+                                            class="text-[10px] text-rose-400 hover:text-rose-600 hover:underline"
+                                        >
+                                            Сбросить историю
+                                        </button>
+                                    </div>
+
+                                    {/* Weight Table */}
+                                    <div class="overflow-hidden border border-slate-100 rounded-xl text-xs">
+                                        <div class="bg-slate-50 grid grid-cols-3 font-bold py-2 px-3 border-b border-slate-100 text-slate-600">
+                                            <span>Дата</span>
+                                            <span class="text-center">Вес (кг)</span>
+                                            <span class="text-right">Динамика</span>
+                                        </div>
+                                        <div class="divide-y divide-slate-100 max-h-40 overflow-y-auto custom-scrollbar">
+                                            {weightLog.slice().reverse().map((row, index, arr) => {
+                                                // Calculate difference from previous weight (which is next in the reversed array)
+                                                const prevRow = arr[index + 1];
+                                                let diffText = "—";
+                                                let diffClass = "text-slate-400";
+                                                
+                                                if (prevRow) {
+                                                    const diff = row.weight - prevRow.weight;
+                                                    if (diff < 0) {
+                                                        diffText = `${diff.toFixed(1)} кг ⬇️`;
+                                                        diffClass = "text-emerald-600 font-bold";
+                                                    } else if (diff > 0) {
+                                                        diffText = `+${diff.toFixed(1)} кг ⬆️`;
+                                                        diffClass = "text-rose-500 font-medium";
+                                                    } else {
+                                                        diffText = "0.0 кг ✊";
+                                                        diffClass = "text-slate-500";
+                                                    }
+                                                }
+
+                                                return (
+                                                    <div key={index} class="grid grid-cols-3 py-2 px-3 hover:bg-slate-50/50">
+                                                        <span class="text-slate-500 font-medium">{row.date}</span>
+                                                        <span class="text-center font-bold text-slate-800">{row.weight} кг</span>
+                                                        <span class={`text-right ${diffClass}`}>{diffText}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Motivation Card */}
+                                    <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 flex gap-3 items-center">
+                                        <span class="text-2xl animate-pulse">🎉</span>
+                                        <p class="text-xs text-emerald-900 leading-snug font-medium">
+                                            Минус <strong class="text-emerald-600 text-sm font-extrabold">{totalWeightLoss} кг</strong> с начала пути! До заветной цели осталось скинуть всего <strong class="text-rose-500 text-sm font-extrabold">{remainingToTarget} кг</strong>. Любочка гордится тобой неимоверно!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* MOBILE NAVIGATION BAR (Bottom Sticky) */}
+                    <nav class="bg-white border-t border-slate-100 py-2 px-1 rounded-t-2xl shadow-[0_-4px_12px_rgba(0,0,0,0.05)] absolute bottom-0 left-0 right-0 z-10 flex justify-around items-center">
+                        <button 
+                            onClick={() => setActiveTab('home')}
+                            class={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl transition ${
+                                activeTab === 'home' ? 'text-rose-500 bg-rose-50 font-bold scale-105' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <i data-lucide="home" class="w-5 h-5"></i>
+                            <span class="text-[9px]">Главная</span>
+                        </button>
+
+                        <button 
+                            onClick={() => setActiveTab('chat')}
+                            class={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl transition ${
+                                activeTab === 'chat' ? 'text-rose-500 bg-rose-50 font-bold scale-105' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <div class="relative">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">1</span>
+                            </div>
+                            <span class="text-[9px]">Чат Любочки</span>
+                        </button>
+
+                        <button 
+                            onClick={() => setActiveTab('analysis')}
+                            class={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl transition ${
+                                activeTab === 'analysis' ? 'text-rose-500 bg-rose-50 font-bold scale-105' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <i data-lucide="activity" class="w-5 h-5"></i>
+                            <span class="text-[9px]">Анализы</span>
+                        </button>
+
+                        <button 
+                            onClick={() => setActiveTab('recipes')}
+                            class={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl transition ${
+                                activeTab === 'recipes' ? 'text-rose-500 bg-rose-50 font-bold scale-105' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <i data-lucide="soup" class="w-5 h-5"></i>
+                            <span class="text-[9px]">Рецепты</span>
+                        </button>
+
+                        <button 
+                            onClick={() => setActiveTab('profile')}
+                            class={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl transition ${
+                                activeTab === 'profile' ? 'text-rose-500 bg-rose-50 font-bold scale-105' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                            <span class="text-[9px]">Кабинет</span>
+                        </button>
+                    </nav>
+
+                </div>
+            );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+
+        // Refresh icons whenever DOM content changes
+        setInterval(() => {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
